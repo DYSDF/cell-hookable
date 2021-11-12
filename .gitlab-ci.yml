@@ -1,0 +1,17 @@
+include:
+  - remote: 'http://gitlab.x.lan/web/gitlab-utils/-/raw/master/cache_modules.yml'
+  - remote: 'http://gitlab.x.lan/web/gitlab-utils/-/raw/master/wx_alarm.yml'
+
+test:
+  script:
+    - npm run test
+  coverage: /All\sfiles.*?\s+(\d+.\d+)/
+  only:
+    - branches
+
+publish:
+  script:
+    - npm publish --registry http://nexus.x.lan/repository/ysnpm/
+  only:
+    - master
+    - /B_LC_RELEASE_.*/

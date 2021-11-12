@@ -1,0 +1,44 @@
+{
+  "name": "cell-hookable",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./cjs/index.js",
+  "module": "./esm/index.js",
+  "types": "types/",
+  "type-check": "tsc",
+  "files": [
+    "cjs",
+    "esm",
+    "types"
+  ],
+  "scripts": {
+    "test": "jest",
+    "prebuild": "rimraf ./tjs && tsc -p tsconfig.json -m ESNext",
+    "build:esm": "rimraf ./esm && rollup -f esm -c rollup.config.js -d ./esm",
+    "build:cjs": "rimraf ./cjs && rollup -f cjs -c rollup.config.js -d ./cjs",
+    "build": "npm run build:esm && npm run build:cjs",
+    "prepublishOnly": "npm run test && npm run build"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/preset-env": "^7.14.7",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-commonjs": "^15.1.0",
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "@rollup/plugin-typescript": "^6.0.0",
+    "@types/jest": "^27.0.2",
+    "builtin-modules": "^3.2.0",
+    "consola": "^2.15.0",
+    "esm": "^3.2.25",
+    "fs-extra": "^9.0.1",
+    "jest": "^27.3.1",
+    "lodash": "^4.17.20",
+    "rollup": "^2.28.2",
+    "semver": "^7.3.2",
+    "sync-request": "^6.1.0",
+    "ts-jest": "^27.0.7",
+    "tslib": "^2.0.1",
+    "typescript": "^4.0.3"
+  }
+}
