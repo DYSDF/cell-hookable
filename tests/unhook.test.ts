@@ -1,8 +1,7 @@
 import Hookable from '../src/index'
 
-const hookable = new Hookable()
-
 test('test unhook api', async () => {
+  const hookable = new Hookable()
   const result = await new Promise(resolve => {
     const callback = (value: string) => resolve(value)
     hookable.hook('test', callback)
@@ -14,6 +13,7 @@ test('test unhook api', async () => {
 })
 
 test('test unhook api', async () => {
+  const hookable = new Hookable()
   const result = await new Promise(resolve => {
     const callback = (value: string) => resolve(value)
     hookable.hook('test', callback)
@@ -25,6 +25,7 @@ test('test unhook api', async () => {
 })
 
 test('test unhook api', async () => {
+  const hookable = new Hookable()
   const result = await new Promise(resolve => {
     const callback = (value: string) => resolve(value)
     const unhook = hookable.hook({
@@ -40,6 +41,7 @@ test('test unhook api', async () => {
 })
 
 test('test unhook api', async () => {
+  const hookable = new Hookable()
   const result = await new Promise(resolve => {
     const callback = (value: string) => resolve(value)
     hookable.hook({
@@ -52,6 +54,28 @@ test('test unhook api', async () => {
     })
     hookable.call('hook_a', 'success')
     hookable.call('hook_b', 'success')
+    setTimeout(() => resolve('cancel'), 1000)
+  })
+  expect(result).toBe('cancel')
+})
+
+test('test generic unhook api', async () => {
+  const hookable = new Hookable()
+  const result = await new Promise(resolve => {
+    const callback = (value: string) => resolve(value)
+    hookable.hook({
+      A_hook_a: callback,
+      B_hook_b: callback,
+      C_hook_c: callback
+    })
+    hookable.unhook({
+      '*_a': callback,
+      'B_*': callback
+    })
+    hookable.unhook(/^C_.+/, callback)
+    hookable.call('A_hook_a', 'success A')
+    hookable.call('B_hook_b', 'success B')
+    hookable.call('C_hook_c', 'success C')
     setTimeout(() => resolve('cancel'), 1000)
   })
   expect(result).toBe('cancel')
