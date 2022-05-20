@@ -2,6 +2,10 @@ import { isPlainObj } from './utils'
 
 type Handler = (...args: any) => Promise<void> | void
 
+type Options = {
+  immediate?: boolean
+}
+
 type Hooks = Record<string | number | symbol, Handler>
 
 interface Logger {
@@ -12,32 +16,38 @@ interface Logger {
 
 export default class Hookable {
   private _hooks: Map<any, Handler[]>
+  private _lasts: Map<any, any[]>
   private _logger: Logger | false
 
   constructor(logger: Logger | false = console) {
     this._logger = logger
     this._hooks = new Map()
+    this._lasts = new Map()
   }
 
   // 发布通知
-  async call(name: any, ...args: any) {
-    try {
-      await this._hooks.get(name)?.reduce(async (promise: Promise<any>, fn) => {
-        await promise
-        return fn(...args)
-      }, Promise.resolve(null))
-    } catch (err) {
-      if (name !== 'error') await this.call('error', err)
-      const logger = this._logger && (this._logger.fatal || this._logger.error)
-      logger && logger(err)
-    }
+  call(name: any, ...args: any) {
+    this._lasts.set(name, args)
+    return (async () => {
+      try {
+        await this._hooks.get(name)?.reduce(async (promise: Promise<any>, fn) => {
+          await promise
+          return fn(...args)
+        }, Promise.resolve(null))
+
+      } catch (err) {
+        if (name !== 'error') await this.call('error', err)
+        const logger = this._logger && (this._logger.fatal || this._logger.error)
+        logger && logger(err)
+      }
+    })()
   }
 
-  hook(name: any, handler: Handler): Function;
-  hook(hooks: Hooks): Function;
-  hook(name_or_hooks: any, handler?: Handler): Function {
+  hook(name: any, handler: Handler, options?: Options): Function;
+  hook(hooks: Hooks, options?: Options): Function;
+  hook(name_or_hooks: any, handler?: Handler | Options, options?: Options): Function {
     if (isPlainObj(name_or_hooks)) {
-      const unhooks = Object.keys(name_or_hooks).map(key => this.hook(key, name_or_hooks[key]))
+      const unhooks = Object.keys(name_or_hooks).map(key => this.hook(key, name_or_hooks[key], handler as Options))
       return () => unhooks.forEach(unhook => unhook())
     }
 
@@ -49,14 +59,19 @@ export default class Hookable {
 
     const callbacks = this._hooks.get(name_or_hooks)
     callbacks!.push(handler)
+
+    if (options?.immediate && this._lasts.has(name_or_hooks)) {
+      handler(...this._lasts.get(name_or_hooks) || [])
+    }
+
     return () => this.unhook(name_or_hooks, handler)
   }
 
-  hookOnce(name: any, handler: Handler): Function;
-  hookOnce(hooks: Hooks): Function;
-  hookOnce(name_or_hooks: any, handler?: Handler): Function {
+  hookOnce(name: any, handler: Handler, options?: Options): Function;
+  hookOnce(hooks: Hooks, options?: Options): Function;
+  hookOnce(name_or_hooks: any, handler?: Handler | Options, options?: Options): Function {
     if (isPlainObj(name_or_hooks)) {
-      const unhooks = Object.keys(name_or_hooks).map(key => this.hookOnce(key, name_or_hooks[key]))
+      const unhooks = Object.keys(name_or_hooks).map(key => this.hookOnce(key, name_or_hooks[key], options as Options))
       return () => unhooks.forEach(unhook => unhook())
     }
 
